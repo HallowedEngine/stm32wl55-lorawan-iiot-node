@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  # Runs static analysis and, when a firmware Makefile is present, builds the STM32WL55 firmware.
+  firmware-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck on firmware drivers
+        run: |
+          cppcheck firmware/Drivers/ \
+            --enable=all \
+            --error-exitcode=1 \
+            --suppress=missingIncludeSystem \
+            --suppress=unusedFunction \
+            -I firmware/Core/Inc \
+            --force
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi
+
+      - name: Check firmware Makefile exists
+        id: firmware_makefile
+        run: |
+          if [ -f firmware/Makefile ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "firmware/Makefile found; firmware build will run."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::firmware/Makefile not found; skipping firmware build and artifact upload."
+          fi
+
+      - name: Build firmware
+        if: steps.firmware_makefile.outputs.exists == 'true'
+        working-directory: firmware
+        run: make -j$(nproc)
+
+      - name: Upload firmware build artifact
+        if: steps.firmware_makefile.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-build
+          path: firmware/build/
+
+  # Installs the Python backend dependencies and runs linting plus type checking.
+  backend-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Install backend linters
+        run: pip install ruff mypy
+
+      - name: Run ruff on backend
+        run: ruff check backend/
+
+      - name: Run mypy on backend
+        run: mypy backend/ --ignore-missing-imports

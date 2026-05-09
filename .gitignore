@@ -1,0 +1,23 @@
+# Environment - gerçek tokenlar burada
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# STM32 build output
+firmware/build/
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+
+# IDE dosyaları
+.vscode/
+.idea/
+*.launch
+
+# Log dosyaları
+*.log
