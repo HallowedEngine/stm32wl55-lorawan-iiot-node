@@ -110,7 +110,7 @@ class InfluxDBWriter:
                     bucket=self._config.bucket,
                     org=self._config.org,
                     record=point,
-                    write_precision=WritePrecision.NS,
+                    write_precision="ns",
                 )
                 return
             except Exception as exc:
