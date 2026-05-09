@@ -11,7 +11,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from influxdb_client import InfluxDBClient, Point
+from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 from config import INFLUXDB, InfluxDBConfig
@@ -110,7 +110,7 @@ class InfluxDBWriter:
                     bucket=self._config.bucket,
                     org=self._config.org,
                     record=point,
-                    write_precision="ns",
+                    write_precision=WritePrecision.NS,  # type: ignore[arg-type]
                 )
                 return
             except Exception as exc:
