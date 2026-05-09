@@ -98,3 +98,4 @@ uint8_t SHT31_Read(I2C_HandleTypeDef *hi2c, SHT31_Data *data)
     }
 
     return status;
+}
